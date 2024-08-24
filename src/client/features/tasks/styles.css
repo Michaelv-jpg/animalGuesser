@@ -1,0 +1,10 @@
+.continent {
+    width: 800px;
+    position: fixed;
+    filter: brightness(1) saturate(1) sepia(0); 
+    transition: filter 0.3s ease; 
+}
+
+.continent:hover {
+    filter: brightness(1) saturate(3) sepia(0) hue-rotate(100deg); 
+}
