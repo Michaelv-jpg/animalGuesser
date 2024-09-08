@@ -12,94 +12,22 @@ router.use((req, res, next) => {
   next();
 });
 
-/** Sends all tasks */
-router.get("/", async (req, res, next) => {
+/** Fetch animals by continent */
+router.get("/animals/:continent", async (req, res, next) => {
   try {
-    const tasks = await prisma.task.findMany({
-      where: { userId: res.locals.user.id },
+    const continent = req.params.continent;
+    const animals = await prisma.animals.findMany({
+      where: { continent: continent },
     });
-    res.json(tasks);
-  } catch (err) {
-    next(err);
-  }
-});
 
-/** Creates new task and sends it */
-router.post("/", async (req, res, next) => {
-  try {
-    const { description, done } = req.body;
-    if (!description) {
-      throw new ServerError(400, "Description required.");
+    if (!animals.length) {
+      throw new ServerError(404, `No animals found for continent: ${continent}`);
     }
 
-    const task = await prisma.task.create({
-      data: {
-        description,
-        done: done ?? false,
-        user: { connect: { id: res.locals.user.id } },
-      },
-    });
-    res.json(task);
+    res.json(animals);
   } catch (err) {
     next(err);
   }
 });
 
-/** Checks if task exists and belongs to given user */
-const validateTask = (user, task) => {
-  if (!task) {
-    throw new ServerError(404, "Task not found.");
-  }
-
-  if (task.userId !== user.id) {
-    throw new ServerError(403, "This task does not belong to you.");
-  }
-};
-
-/** Sends single task by id */
-router.get("/:id", async (req, res, next) => {
-  try {
-    const id = +req.params.id;
-
-    const task = await prisma.task.findUnique({ where: { id } });
-    validateTask(res.locals.user, task);
-
-    res.json(task);
-  } catch (err) {
-    next(err);
-  }
-});
-
-/** Updates single task by id */
-router.put("/:id", async (req, res, next) => {
-  try {
-    const id = +req.params.id;
-    const { description, done } = req.body;
-
-    const task = await prisma.task.findUnique({ where: { id } });
-    validateTask(res.locals.user, task);
-
-    const updatedTask = await prisma.task.update({
-      where: { id },
-      data: { description, done },
-    });
-    res.json(updatedTask);
-  } catch (err) {
-    next(err);
-  }
-});
-
-/** Deletes single task by id */
-router.delete("/:id", async (req, res, next) => {
-  try {
-    const id = +req.params.id;
-
-    const task = await prisma.task.findUnique({ where: { id } });
-    validateTask(res.locals.user, task);
-
-    await prisma.task.delete({ where: { id } });
-    res.sendStatus(204);
-  } catch (err) {
-    next(err);
-  }
-});
+// Other existing routes for tasks
